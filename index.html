@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chá de Revelação - Votação</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Adicione a configuração do Firebase aqui -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getDatabase, ref, onValue, set, push, update } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyCiBpOI4QrhpXXz6LmUi7TAuCDTwVuOYQA",
+          authDomain: "cha-de-revela.firebaseapp.com",
+          databaseURL: "https://cha-de-revela-default-rtdb.firebaseio.com",
+          projectId: "cha-de-revela",
+          storageBucket: "cha-de-revela.appspot.com",
+          messagingSenderId: "348984011226",
+          appId: "1:348984011226:web:80f33db5012f662edeb8e3",
+          measurementId: "G-877XVFEZW2"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const database = getDatabase(app);
+
+        // Referências ao banco de dados
+        const boyVotesRef = ref(database, 'votes/boy');
+        const girlVotesRef = ref(database, 'votes/girl');
+        const participantsRef = ref(database, 'participants');
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const boyButton = document.getElementById('boyButton');
+            const girlButton = document.getElementById('girlButton');
+            const boyVotesSpan = document.getElementById('boyVotes');
+            const girlVotesSpan = document.getElementById('girlVotes');
+            const participantsList = document.getElementById('participants');
+            const participantNameInput = document.getElementById('participantName');
+
+            // Atualiza votos em tempo real
+            onValue(boyVotesRef, (snapshot) => {
+                boyVotesSpan.textContent = snapshot.val() || 0;
+            });
+
+            onValue(girlVotesRef, (snapshot) => {
+                girlVotesSpan.textContent = snapshot.val() || 0;
+            });
+
+            // Adiciona votações
+            boyButton.addEventListener('click', () => {
+                const participantName = participantNameInput.value.trim();
+                if (participantName) {
+                    update(boyVotesRef, (currentVotes) => (currentVotes || 0) + 1);
+                    push(participantsRef, { name: participantName, vote: 'Menino' });
+                }
+            });
+
+            girlButton.addEventListener('click', () => {
+                const participantName = participantNameInput.value.trim();
+                if (participantName) {
+                    update(girlVotesRef, (currentVotes) => (currentVotes || 0) + 1);
+                    push(participantsRef, { name: participantName, vote: 'Menina' });
+                }
+            });
+
+            // Atualiza lista de participantes em tempo real
+            onValue(participantsRef, (snapshot) => {
+                participantsList.innerHTML = '';
+                snapshot.forEach((childSnapshot) => {
+                    const participant = childSnapshot.val();
+                    const li = document.createElement('li');
+                    li.textContent = `${participant.name} votou em ${participant.vote}`;
+                    participantsList.appendChild(li);
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Chá de Revelação</h1>
+        <p>Vote na revelação:</p>
+        <div class="vote-buttons">
+            <button id="boyButton">Menino</button>
+            <button id="girlButton">Menina</button>
+        </div>
+        <h2>Votações:</h2>
+        <div id="results">
+            <p>Menino: <span id="boyVotes">0</span></p>
+            <p>Menina: <span id="girlVotes">0</span></p>
+        </div>
+        <h3>Participantes:</h3>
+        <ul id="participants"></ul>
+        <input type="text" id="participantName" placeholder="Seu nome">
+    </div>
+</body>
+</html>
